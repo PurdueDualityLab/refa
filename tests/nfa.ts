@@ -1332,7 +1332,7 @@ describe("NFA", function () {
 				// parse regex using to regex conversion
 				const nfa = literalToNFA(regex);
 				const normalMatch = nfa.test(inputIterable);
-				const thompsonMatch = nfa.match(input);
+				const thompsonMatch = nfa.test(inputIterable, true);
 				assert.equal(normalMatch, thompsonMatch);
 			}
 		}
