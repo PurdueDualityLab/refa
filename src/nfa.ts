@@ -95,18 +95,59 @@ export class NFA implements ReadonlyNFA {
 		return NFA.fromFA(this);
 	}
 
-	test(word: Iterable<number>): boolean {
+	test(word: Iterable<number>, thompson: boolean = false): boolean {
 		const nodes = this.nodes;
 		const characters = [...word];
 
-		function match(index: number, node: NFA.Node): boolean {
+		// Thompson breadth-first matching
+		function matchThompson(index: number, node: NFA.Node) {
+			// Step over states, calculate next list of possible states
+			function step(currentSet: Set<NFA.Node>, nextSet: Set<NFA.Node>, char: number) {
+				// iterate over each node in state
+				currentSet.forEach((node: NFA.Node) => {
+					// check whether each output node of node contained in match set
+					node.out.forEach((set: CharSet, outNode: NFA.Node) => {
+						if(set.has(char)) { // if so, add state to next list to check
+							nextSet.add(outNode);
+						}
+					})
+				})
+			}
+
+			// initialize list swapping shenanigans
+			let currentSet = new Set<NFA.Node>();
+			let nextSet = new Set<NFA.Node>();
+			let tempSet; // for swapping sets
+			currentSet.add(nodes.initial);
+
+			// iterate over characters
+			for(let ind = index; ind < characters.length; ind++) {
+				step(currentSet, nextSet, characters[ind]);
+				tempSet = currentSet; currentSet = nextSet; nextSet = tempSet;
+				nextSet.clear()
+			}
+
+			// check for match
+			// warning: might have O(n^2) time complexity because of has
+			let isMatch = false;
+			currentSet.forEach((node: NFA.Node) => {
+				if(nodes.finals.has(node)) { // O(n) time complexity?
+					isMatch = true;
+				}
+			})
+
+			return isMatch;
+		}
+
+		// Spencer depth-first matching
+		function matchSpencer(index: number, node: NFA.Node): boolean {
 			if (index >= characters.length) return nodes.finals.has(node);
 
 			const cp = characters[index];
 
 			for (const [to, chars] of node.out) {
 				if (chars.has(cp)) {
-					if (match(index + 1, to)) {
+					if (matchSpencer(index + 1, to)) {
 						return true;
 					}
 				}
@@ -114,7 +155,12 @@ export class NFA implements ReadonlyNFA {
 
 			return false;
 		}
-		return match(0, nodes.initial);
+
+		if(thompson) {
+			return matchThompson(0, nodes.initial)
+		} else {
+			return matchSpencer(0, nodes.initial);
+		}
 	}
 
 	wordSets(): Iterable<CharSet[]> {

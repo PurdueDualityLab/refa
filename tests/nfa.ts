@@ -1302,6 +1302,41 @@ describe("NFA", function () {
 			}
 		}
 	});
+
+	describe("thompson", function() {
+		test([
+			{
+				regex: /\d/,
+				input: "1",
+			},
+			{
+				regex: /\d\w/,
+				input: "1a",
+			},
+			{
+				regex: /\d\d\d*/,
+				input: "12345",
+			}
+		])
+
+		interface TestCase {
+			regex: RegExp,
+			input: string,
+		}
+
+		function test(cases: TestCase[]): void {
+			for (const {regex, input} of cases) {
+				// convert input to array of integer representation
+				let inputIterable = input.split("").map(c => c.charCodeAt(0));
+
+				// parse regex using to regex conversion
+				const nfa = literalToNFA(regex);
+				const normalMatch = nfa.test(inputIterable);
+				const thompsonMatch = nfa.test(inputIterable, true);
+				assert.equal(normalMatch, thompsonMatch);
+			}
+		}
+	})
 });
 
 function getWords(nfa: NFA): string[] {
