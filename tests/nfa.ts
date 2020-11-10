@@ -1,4 +1,4 @@
-import { NFA, match } from "../src/nfa";
+import { NFA } from "../src/nfa";
 import { assert } from "chai";
 import { fromStringToUnicode, fromUnicodeToString } from "../src/words";
 import { literalToString, literalToNFA, removeIndentation, reachableFinalStates, literalToDFA } from "./helper/fa";
